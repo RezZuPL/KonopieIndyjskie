@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Convert List to Text",
+name: "Check If Member",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,18 +14,7 @@ name: "Convert List to Text",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Lists and Loops",
-
-//---------------------------------------------------------------------
-// Action Subtitle
-//
-// This function generates the subtitle displayed next to the name.
-//---------------------------------------------------------------------
-
-subtitle: function(data) {
-	const list = ['Server Members', 'Server Channels', 'Server Roles', 'Server Emojis', 'All Bot Servers', 'Mentioned User Roles', 'Command Author Roles', 'Temp Variable', 'Server Variable', 'Global Variable'];
-	return `Convert ${list[parseInt(data.list)]} to Text`;
-},
+section: "Conditions",
 
 //---------------------------------------------------------------------
 // DBM Mods Manager Variables (Optional but nice to have!)
@@ -35,29 +24,23 @@ subtitle: function(data) {
 //---------------------------------------------------------------------
 
 // Who made the mod (If not set, defaults to "DBM Mods")
-author: "DBM & TotallyNotTwo",
+author: "Lasse & MrGold",
 
 // The version of the mod (Defaults to 1.0.0)
-version: "1.9.2", //Added in 1.9.2
+version: "1.9", //Added in 1.8.8
 
 // A short description to show on the mod line for this mod (Must be on a single line)
-short_description: "Added more options to default action.",
-
-// If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
-
+short_description: "Check if a member meets the conditions.",
 
 //---------------------------------------------------------------------
-
-//---------------------------------------------------------------------
-// Action Storage Function
+// Action Subtitle
 //
-// Stores the relevant variable info for the editor.
+// This function generates the subtitle displayed next to the name.
 //---------------------------------------------------------------------
 
-variableStorage: function(data, varType) {
-	const type = parseInt(data.storage);
-	if(type !== varType) return;
-	return ([data.varName2, 'Text']);
+subtitle: function(data) {
+	const results = ["Continue Actions", "Stop Action Sequence", "Jump To Action", "Jump Forward Actions"];
+	return `If True: ${results[parseInt(data.iftrue)]} ~ If False: ${results[parseInt(data.iffalse)]}`;
 },
 
 //---------------------------------------------------------------------
@@ -68,71 +51,57 @@ variableStorage: function(data, varType) {
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["list", "varName", "start", "middle", "end", "storage", "varName2", "sort"],
+fields: ["member", "varName", "info", "varName2", "iftrue", "iftrueVal", "iffalse", "iffalseVal"],
 
 //---------------------------------------------------------------------
 // Command HTML
 //
 // This function returns a string containing the HTML used for
-// editting actions. 
+// editting actions.
 //
 // The "isEvent" parameter will be true if this action is being used
-// for an event. Due to their nature, events lack certain information, 
+// for an event. Due to their nature, events lack certain information,
 // so edit the HTML to reflect this.
 //
-// The "data" parameter stores constants for select elements to use. 
+// The "data" parameter stores constants for select elements to use.
 // Each is an array: index 0 for commands, index 1 for events.
-// The names are: sendTargets, members, roles, channels, 
+// The names are: sendTargets, members, roles, channels,
 //                messages, servers, variables
 //---------------------------------------------------------------------
 
 html: function(isEvent, data) {
 	return `
-	<div><p>This action has been modified by DBM Mods.</p></div><br>
 <div>
 	<div style="float: left; width: 35%;">
-		Source List:<br>
-		<select id="list" class="round" onchange="glob.listChange(this, 'varNameContainer')">
-			${data.lists[isEvent ? 1 : 0]}
+		Source Member:<br>
+		<select id="member" class="round" onchange="glob.memberChange(this, 'varNameContainer')">
+			${data.members[isEvent ? 1 : 0]}
 		</select>
 	</div>
 	<div id="varNameContainer" style="display: none; float: right; width: 60%;">
 		Variable Name:<br>
 		<input id="varName" class="round" type="text" list="variableList"><br>
-	</div><br><br><br>
-	<div>
-		Sort List:<br>
-		<select id="sort" class="round" style="width: 90%;">
-			<option value="0">Sort By Name</option>
-			<option value="1" selected>Don't Sort</option>
-		</select>
 	</div>
-</div><br><br>
-<div style="padding-top: 8px; display: table;">
-	<div style="display: table-cell;">
-		Start Characters:<br>
-		<input id="start" class="round" type="text">
-	</div>
-	<div style="display: table-cell;">
-		Middle Characters:<br>
-		<input id="middle" class="round" type="text">
-	</div>
-	<div style="display: table-cell;">
-		End Characters:<br>
-		<input id="end" class="round" type="text" value="\\n">
-	</div>
-</div><br>
-<div>
+</div><br><br><br>
+<div style="padding-top: 8px;">
 	<div style="float: left; width: 35%;">
-		Store In:<br>
-		<select id="storage" class="round">
-			${data.variables[1]}
+		Check if Member:<br>
+		<select id="info" class="round">
+			<option value="0" selected>Is Bot</option>
+			<option value="2">Is Kickable</option>
+			<option value="1">Is Bannable</option>
+			<option value="4">Is In Voice Channel</option>
+			<option value="5">Is User Manageable?</option>
+      <option value="6">Is Bot Owner?</option>
 		</select>
 	</div>
-	<div id="varNameContainer2" style="float: right; width: 60%;">
+	<div id="varNameContainer2" style="display: none; float: right; width: 60%;">
 		Variable Name:<br>
-		<input id="varName2" class="round" type="text">
+		<input id="varName2" class="round" type="text" list="variableList2"><br>
 	</div>
+</div><br><br><br>
+<div style="padding-top: 8px;">
+	${data.conditions[0]}
 </div>`
 },
 
@@ -147,52 +116,67 @@ html: function(isEvent, data) {
 init: function() {
 	const {glob, document} = this;
 
-	glob.listChange(document.getElementById('list'), 'varNameContainer');
+	glob.memberChange(document.getElementById('member'), 'varNameContainer');
+	glob.onChangeTrue(document.getElementById('iftrue'));
+	glob.onChangeFalse(document.getElementById('iffalse'));
 },
 
 //---------------------------------------------------------------------
 // Action Bot Function
 //
 // This is the function for the action within the Bot's Action class.
-// Keep in mind event calls won't have access to the "msg" parameter, 
+// Keep in mind event calls won't have access to the "msg" parameter,
 // so be sure to provide checks for variable existance.
 //---------------------------------------------------------------------
 
 action: function(cache) {
 	const data = cache.actions[cache.index];
-	const storage = parseInt(data.list);
-	const varName = this.evalMessage(data.varName, cache);
-	const list = this.getList(storage, varName, cache);
-	const sort = parseInt(data.sort);
 
-	switch(sort) {
+	const type = parseInt(data.member);
+	const varName = this.evalMessage(data.varName, cache);
+	const member = this.getMember(type, varName, cache);
+
+	const type2 = parseInt(data.role);
+	const varName2 = this.evalMessage(data.varName2, cache);
+	const info = parseInt(data.info);
+	
+	const dibiem = this.getDBM();
+
+	let result = false;
+	switch(info) {
 		case 0:
-			list.sort();
+			result = Boolean(member.user.bot);
 			break;
 		case 1:
+			result = Boolean(member.bannable);
+			break;
+		case 2:
+			result = Boolean(member.kickable);
+			break;
+		// case 3:
+		// 	result = Boolean(member.speaking);
+		// 	break; //Do not ask me why this is not working... ~Lasse
+		case 4:
+			if(member.voiceChannelID !== undefined) {
+				result = true;
+			} else {
+				result = false;
+			}
+			break;
+		case 5:
+			result = member.manageable;
+			break;
+		case 6:
+			if(member.id == dibiem.Files.data.settings.ownerId) {
+				result = true;
+			} else {
+				result = false;
+			}
+			break;
+		default:
 			break;
 	}
-			
-	const start = this.evalMessage(data.start, cache).replace('\\n', '\n');
-	const middle = this.evalMessage(data.middle, cache).replace('\\n', '\n');
-	const end = this.evalMessage(data.end, cache).replace('\\n', '\n');
-	let result = '';
-
-	for(let i = 0; i < list.length; i++) {
-		if(i === 0) {
-			result += (start + String(list[i]) + end);
-		} else {
-			result += (start + middle + String(list[i]) + end);
-		}
-	}
-
-	if(result) {
-		const varName2 = this.evalMessage(data.varName2, cache);
-		const storage2 = parseInt(data.storage);
-		this.storeValue(result, storage2, varName2, cache);
-	}
-
-	this.callNextAction(cache);
+	this.executeResults(result, data, cache);
 },
 
 //---------------------------------------------------------------------
